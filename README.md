@@ -28,6 +28,7 @@ inst update
 inst search <pattern>           Search for packages
 inst install <pkg> [pkg ...]    Install by name
 inst install -c <num> [num ..]  Install by index number (from search results)
+inst install -f <file>          Install all packages listed in a file
 inst update                     Refresh the local package list
 ```
 
@@ -47,6 +48,32 @@ Installing curl-8.5.0.tgz
 ```
 
 Short aliases work too: `inst s` for search, `inst i` for install, `inst u` for update.
+
+### Bulk install from file
+
+Create a package manifest (one package per line, `#` comments supported):
+
+```sh
+# base-server.pkg
+vim
+curl
+git
+rsync
+tmux
+htop
+```
+
+Then install everything in one go:
+
+```sh
+$ inst install -f base-server.pkg
+Installing vim
+Installing curl
+Installing git
+...
+```
+
+This makes `inst` usable from Ansible, shell provisioning scripts, or any automation that needs a reproducible package baseline. See `examples/` for sample manifests.
 
 ## Supported platforms
 
@@ -79,6 +106,7 @@ The original `original/` directory contains the 2003 source for historical refer
 
 ## Roadmap
 
+- [x] Bulk install from file (`inst install -f`)
 - [ ] Tab completion (bash/zsh/fish)
 - [ ] `inst remove` and `inst list` (installed packages)
 - [ ] `inst info <pkg>` (show description, version, deps)

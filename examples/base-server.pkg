@@ -1,0 +1,9 @@
+# base-server.pkg - minimal server baseline
+# Use with: inst install -f base-server.pkg
+
+vim
+curl
+git
+rsync
+tmux
+htop

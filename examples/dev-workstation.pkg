@@ -1,0 +1,13 @@
+# dev-workstation.pkg - developer workstation packages
+# Use with: inst install -f dev-workstation.pkg
+
+vim
+git
+curl
+wget
+tmux
+htop
+jq
+tree
+rsync
+strace

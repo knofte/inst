@@ -10,6 +10,7 @@
 #   inst search <pattern>     Search for packages matching <pattern>
 #   inst install <pkg> [...]  Install one or more packages by name
 #   inst install -c <n> [...] Install packages by index number
+#   inst install -f <file>     Install all packages listed in a file
 #   inst update               Refresh the package list from mirror
 #   inst help                 Show usage information
 #
@@ -33,6 +34,7 @@ Usage:
   inst search  <pattern>         Search for packages matching pattern
   inst install <pkg> [pkg ...]   Install packages by name
   inst install -c <num> [num ..] Install packages by index number
+  inst install -f <file>         Install all packages listed in a file
   inst update                    Refresh the local package list
   inst version                   Show version
   inst help                      Show this message
@@ -126,7 +128,30 @@ cmd_install() {
     load_conf 2>/dev/null || true
     detect_backend
 
-    if [ "$1" = "-c" ]; then
+    if [ "$1" = "-f" ]; then
+        shift
+        [ -n "$1" ] || die "usage: inst install -f <file>"
+        [ -f "$1" ] || die "file not found: $1"
+        failed=""
+        while IFS= read -r line || [ -n "$line" ]; do
+            # skip blank lines and comments
+            case "$line" in
+                ""|\#*) continue ;;
+            esac
+            pkg=$(echo "$line" | awk '{print $1}')
+            echo "Installing $pkg"
+            if [ -n "$pkg_site" ]; then
+                $PKG_ADD "$pkg_site/$pkg" || failed="$failed $pkg"
+            else
+                $PKG_ADD "$pkg" || failed="$failed $pkg"
+            fi
+        done < "$1"
+        if [ -n "$failed" ]; then
+            echo "inst: failed to install:$failed" >&2
+            exit 1
+        fi
+        return
+    elif [ "$1" = "-c" ]; then
         shift
         [ -n "$1" ] || die "usage: inst install -c <number> [number ...]"
         for num in "$@"; do
