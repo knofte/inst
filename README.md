@@ -120,4 +120,5 @@ ISC
 ## Authors
 
 - Kent Riboe - kent@riboe.se
-- Kristoffer Bjork - kristoffer@alphix.se (original co-author)
+- Kristoffer Bjork - kristoffer@alphix.se
+  
