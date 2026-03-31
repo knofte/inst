@@ -87,7 +87,7 @@ The original `original/` directory contains the 2005 source for historical refer
 
 ## License
 
-MIT
+ISC
 
 ## Authors
 
