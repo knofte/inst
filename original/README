@@ -1,0 +1,39 @@
+This is a simple script for search and install of packages.
+
+Installation:
+run the installscript - "sh install.sh"
+edit the file "/etc/inst.conf" to fit your needs 
+(you can use both ftp and http sites)
+run "makelist_inst" (this is automated in v1.0 and newer)
+
+SYNTAX:
+sinst "package" - search for a package.
+inst "package" - installs a package
+inst -c "number" - installs a packages 
+(the number is displayed by sinst befor the packagename).
+
+
+A few examples:
+'sinst bash' <- lists all bash packages (including different flavours).
+147 bash-3.0-static.tgz
+148 bash-3.0.tgz
+
+to install the static version, run:
+"inst bash-3.0-static"
+or
+'inst -c 147'
+
+I can also specify more than one package at one time
+"inst -c 147 256" would install 2 packages.
+
+If only one package with specific name appears i.e
+1515 joe-3.5.tgz
+Then you could simply run
+'inst joe'.
+
+
+Maintained and updated by Kent Riboe - kent@alpcon.se
+
+
+HISTORY
+inst was first created by Kristoffer Björk - kristoffer@alphix.se

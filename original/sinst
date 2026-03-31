@@ -1,0 +1,5 @@
+#!/bin/sh
+for pkg in $*
+do
+grep -n $pkg /etc/inst_list | sed 's/\:/\ /g'
+done

@@ -1,0 +1,12 @@
+#!/bin/sh
+. /etc/inst.conf
+
+if [ -f "/etc/inst_list" ]
+then
+rm /etc/inst_list
+fi
+
+for pkg in $(lynx -dump $pkg_site | egrep 'http|ftp' | egrep \.tgz$ | awk '{print $2}' | sort | uniq )
+do
+echo $(basename $pkg) >>/etc/inst_list
+done

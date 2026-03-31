@@ -1,0 +1,176 @@
+#!/bin/sh
+#
+# inst - simple, fast package search and install
+#
+# Originally created for OpenBSD in 2005 by:
+#   Kristoffer Bjork <kristoffer@alphix.se>
+#   Kent Riboe <kent@riboe.se>
+#
+# Usage:
+#   inst search <pattern>     Search for packages matching <pattern>
+#   inst install <pkg> [...]  Install one or more packages by name
+#   inst install -c <n> [...] Install packages by index number
+#   inst update               Refresh the package list from mirror
+#   inst help                 Show usage information
+#
+
+set -e
+
+CONF="/etc/inst.conf"
+PKG_LIST="/etc/inst_list"
+VERSION="2.0.0"
+
+# --- helpers ----------------------------------------------------------------
+
+die() {
+    echo "inst: $*" >&2
+    exit 1
+}
+
+usage() {
+    cat <<'EOF'
+Usage:
+  inst search  <pattern>         Search for packages matching pattern
+  inst install <pkg> [pkg ...]   Install packages by name
+  inst install -c <num> [num ..] Install packages by index number
+  inst update                    Refresh the local package list
+  inst version                   Show version
+  inst help                      Show this message
+EOF
+}
+
+load_conf() {
+    [ -f "$CONF" ] || die "config not found: $CONF (run: inst update)"
+    . "$CONF"
+    [ -n "$pkg_site" ] || die "pkg_site not set in $CONF"
+}
+
+# --- detect platform and set backend ----------------------------------------
+
+detect_backend() {
+    os="$(uname -s)"
+    arch="$(uname -m)"
+    ver="$(uname -r)"
+
+    case "$os" in
+        OpenBSD)
+            : "${pkg_site:=https://cdn.openbsd.org/pub/OpenBSD/${ver}/packages/${arch}}"
+            PKG_ADD="pkg_add -v"
+            LIST_CMD="ftp -o - \"\$pkg_site/\" 2>/dev/null | grep -oE '[a-zA-Z0-9][-+.a-zA-Z0-9_]*\.tgz' | sort -u"
+            ;;
+        FreeBSD)
+            PKG_ADD="pkg install -y"
+            LIST_CMD="pkg search -q . 2>/dev/null | sort -u"
+            ;;
+        NetBSD)
+            : "${pkg_site:=https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/${arch}/${ver}/All}"
+            PKG_ADD="pkg_add -v"
+            LIST_CMD="ftp -o - \"\$pkg_site/\" 2>/dev/null | grep -oE '[a-zA-Z0-9][-+.a-zA-Z0-9_]*\.tgz' | sort -u"
+            ;;
+        Linux)
+            if command -v apt-get >/dev/null 2>&1; then
+                PKG_ADD="apt-get install -y"
+                LIST_CMD="apt-cache pkgnames 2>/dev/null | sort"
+            elif command -v dnf >/dev/null 2>&1; then
+                PKG_ADD="dnf install -y"
+                LIST_CMD="dnf list --available -q 2>/dev/null | awk 'NR>1{print \$1}' | sort"
+            elif command -v pacman >/dev/null 2>&1; then
+                PKG_ADD="pacman -S --noconfirm"
+                LIST_CMD="pacman -Slq 2>/dev/null | sort"
+            elif command -v apk >/dev/null 2>&1; then
+                PKG_ADD="apk add"
+                LIST_CMD="apk list -a 2>/dev/null | awk '{print \$1}' | sort -u"
+            else
+                die "no supported package manager found"
+            fi
+            ;;
+        Darwin)
+            if command -v brew >/dev/null 2>&1; then
+                PKG_ADD="brew install"
+                LIST_CMD="brew formulae 2>/dev/null"
+            else
+                die "homebrew not found - install it from https://brew.sh"
+            fi
+            ;;
+        *)
+            die "unsupported OS: $os"
+            ;;
+    esac
+}
+
+# --- commands ---------------------------------------------------------------
+
+cmd_update() {
+    load_conf 2>/dev/null || true
+    detect_backend
+
+    echo "Refreshing package list..."
+    eval "$LIST_CMD" > "$PKG_LIST.tmp" || die "failed to fetch package list"
+    mv "$PKG_LIST.tmp" "$PKG_LIST"
+    count=$(wc -l < "$PKG_LIST")
+    echo "Done. $count packages indexed."
+}
+
+cmd_search() {
+    [ -n "$1" ] || die "usage: inst search <pattern>"
+    [ -f "$PKG_LIST" ] || die "no package list found - run: inst update"
+
+    for pattern in "$@"; do
+        grep -in "$pattern" "$PKG_LIST" | sed 's/\:/ /g'
+    done
+}
+
+cmd_install() {
+    [ -n "$1" ] || die "usage: inst install <pkg> [pkg ...] | inst install -c <num> [num ...]"
+    [ -f "$PKG_LIST" ] || die "no package list found - run: inst update"
+    load_conf 2>/dev/null || true
+    detect_backend
+
+    if [ "$1" = "-c" ]; then
+        shift
+        [ -n "$1" ] || die "usage: inst install -c <number> [number ...]"
+        for num in "$@"; do
+            prog=$(awk "NR==$num" "$PKG_LIST")
+            [ -n "$prog" ] || { echo "inst: no package at index $num" >&2; continue; }
+            echo "Installing $prog"
+            if [ -n "$pkg_site" ]; then
+                $PKG_ADD "$pkg_site/$prog"
+            else
+                $PKG_ADD "$prog"
+            fi
+        done
+    else
+        for pkg in "$@"; do
+            matches=$(grep -c "$pkg" "$PKG_LIST" 2>/dev/null || true)
+            if [ "$matches" -gt 1 ]; then
+                echo "Multiple matches for '$pkg' - be more specific or use index:"
+                grep -in "$pkg" "$PKG_LIST" | sed 's/\:/ /'
+                continue
+            elif [ "$matches" -eq 0 ]; then
+                echo "inst: no package matching '$pkg'" >&2
+                continue
+            fi
+            prog=$(grep "$pkg" "$PKG_LIST")
+            echo "Installing $prog"
+            if [ -n "$pkg_site" ]; then
+                $PKG_ADD "$pkg_site/$prog"
+            else
+                $PKG_ADD "$prog"
+            fi
+        done
+    fi
+}
+
+# --- main -------------------------------------------------------------------
+
+case "${1:-help}" in
+    search|s)   shift; cmd_search "$@" ;;
+    install|i)  shift; cmd_install "$@" ;;
+    update|u)   cmd_update ;;
+    version|v)  echo "inst $VERSION" ;;
+    help|--help|-h) usage ;;
+    *)
+        # backward compat: bare argument = search if no subcommand recognized
+        cmd_search "$@"
+        ;;
+esac

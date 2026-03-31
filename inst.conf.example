@@ -1,0 +1,15 @@
+# inst.conf - package mirror configuration
+#
+# Copy this file to /etc/inst.conf and adjust as needed.
+# If pkg_site is left empty, inst will auto-detect a sensible default
+# based on your OS.
+
+# OpenBSD example (auto-detected if not set):
+# pkg_site="https://cdn.openbsd.org/pub/OpenBSD/7.6/packages/amd64"
+
+# NetBSD example:
+# pkg_site="https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/amd64/10.0/All"
+
+# FreeBSD uses pkg(8) directly - no mirror URL needed
+
+# Linux distros use their native package manager - no mirror URL needed
