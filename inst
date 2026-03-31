@@ -3,7 +3,7 @@
 # inst - simple, fast package search and install
 #
 # Originally created for OpenBSD in 2005 by:
-#   Kristoffer Bjork <kristoffer@alphix.se>
+#   Kristoffer Bjork
 #   Kent Riboe <kent@riboe.se>
 #
 # Usage:
