@@ -2,7 +2,7 @@
 
 A minimal, universal package search and install tool.
 
-Originally built for **OpenBSD** in 2005, when `pkg_add` had no built-in search and ports meant compiling from source. The idea was simple: give sysadmins two fast commands - search and install - with no ceremony.
+Originally built for **OpenBSD** in 2003, when `pkg_add` had no built-in search and ports meant compiling from source. The idea was simple: give sysadmins two fast commands - search and install - with no ceremony.
 
 Twenty years later, the same UX gap exists across platforms. Every OS has a different package manager with different syntax. `inst` aims to be the one command you can muscle-memory across all of them.
 
@@ -73,9 +73,9 @@ Most platforms auto-detect sensible defaults - you only need this for custom mir
 
 ## History
 
-`inst` was created in March 2005 by Kristoffer Bjork and Kent Riboe, originally targeting OpenBSD's package system. It solved a real friction point: quickly finding and installing binary packages without resorting to ports or memorizing mirror paths.
+`inst` was created in March 2003 by Kristoffer Bjork and Kent Riboe, originally targeting OpenBSD's package system. It solved a real friction point: quickly finding and installing binary packages without resorting to ports or memorizing mirror paths.
 
-The original `original/` directory contains the 2005 source for historical reference.
+The original `original/` directory contains the 2003 source for historical reference.
 
 ## Roadmap
 
